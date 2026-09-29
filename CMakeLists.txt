@@ -13,10 +13,31 @@ target_include_directories(minitensor
     PUBLIC include
 )
 
-add_executable(example
-    examples/basic.cpp
+include(FetchContent)
+
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
 )
 
-target_link_libraries(example
-    PRIVATE minitensor
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(
+    minitensor_tests
+    tests/test_tensor.cpp
 )
+
+target_link_libraries(
+    minitensor_tests
+    PRIVATE
+    minitensor
+    GTest::gtest_main
+)
+
+include(GoogleTest)
+
+gtest_discover_tests(minitensor_tests)
