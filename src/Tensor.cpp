@@ -130,5 +130,53 @@ Tensor Tensor::operator*(const Tensor& other) const
     return result;
 }
 
+Tensor Tensor::reshape(const std::vector<std::size_t>& new_shape) const
+{
+    std::size_t new_size = calculate_size(new_shape);
+    if (new_size != size()) {throw std::runtime_error("New shape does not match the total number of elements in the tensor");}
+    Tensor result(new_shape); 
+    result.data_ = data_; 
+    return result;
+}
+
+Tensor Tensor::transpose() const
+{
+    if (ndim() != 2) {throw std::runtime_error("Transpose is only implemented for 2D tensors");}
+    std::vector<std::size_t> new_shape = {shape_[1], shape_[0]};
+    Tensor result(new_shape);
+    for (std::size_t i = 0; i < shape_[0]; ++i)
+    {
+        for (std::size_t j = 0; j < shape_[1]; ++j)
+        {
+            result.at({j,i}) = at({i,j});
+        }
+    }
+    return result; 
+}
+
+Tensor Tensor::matmul(const Tensor& other) const 
+{
+    if (ndim() != 2 || other.ndim() != 2) {throw std::invalid_argument("Matrix multiplication is only implemented for 2D tensors");}
+    if (shape_[1] != other.shape_[0]) {throw std::invalid_argument("Inner dimensions do not match for matrix multiplication");}
+    
+    std::vector<std::size_t> new_shape = {shape_[0], other.shape_[1]};
+    Tensor result(new_shape);
+    
+    for (std::size_t i = 0; i < shape_[0]; ++i)
+    {
+        for (std::size_t j = 0; j < other.shape_[1]; ++j)
+        {
+            float sum = 0.0f;
+            for (std::size_t k = 0; k < shape_[1]; ++k)
+            {
+                sum += at({i, k}) * other.at({k, j});
+            }
+            result.at({i, j}) = sum;
+        }
+    }
+    
+    return result;
+}
+
 
 

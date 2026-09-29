@@ -22,7 +22,11 @@ class Tensor
         Tensor operator+(const Tensor& other) const;
         Tensor operator-(const Tensor& other) const;
         Tensor operator*(const Tensor& other) const;
-    
+
+        Tensor reshape(const std::vector<std::size_t>& new_shape) const;
+        Tensor transpose() const; 
+        Tensor matmul(const Tensor& other) const; 
+        
     private:
         std::vector<std::size_t> shape_;
         std::vector<std::size_t> strides_;
