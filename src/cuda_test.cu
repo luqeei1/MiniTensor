@@ -18,7 +18,7 @@ int main()
     a.copy_from_host(host_a, n);
     b.copy_from_host(host_b, n);
 
-    cuda_add(
+    cuda_subtract(
         a.data(),
         b.data(),
         c.data(),
