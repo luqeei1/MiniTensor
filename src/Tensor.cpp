@@ -2,11 +2,22 @@
 #include <stdexcept>
 #include <string>
 
-Tensor::Tensor(const std::vector<std::size_t>& shape): 
+Tensor::Tensor(const std::vector<std::size_t>& shape, Device device)
+    : device_(device),
 shape_(shape),
 strides_(calculate_strides(shape_)),
 data_(calculate_size(shape_)) 
 {
+    std::size_t tensor_size = calculate_size(shape_);
+
+    if (device_ == Device::CPU)
+    {
+        data_.resize(tensor_size);
+    }
+    else
+    {
+        cuda_data_ = std::make_unique<CudaBuffer>(tensor_size);
+    }
 }
 
 std::size_t Tensor::calculate_size(const std::vector<std::size_t>& shape) 
@@ -49,8 +60,8 @@ std::size_t Tensor::calculate_offset(const std::vector<std::size_t>& indices) co
 
 std::size_t Tensor::size() const
 {
-    return data_.size();    
-} 
+    return calculate_size(shape_);
+}
 
 std::size_t Tensor::ndim() const
 {
@@ -177,6 +188,58 @@ Tensor Tensor::matmul(const Tensor& other) const
     
     return result;
 }
+
+Device Tensor::device() const
+{
+    return device_;
+}
+
+Tensor Tensor::to(Device device) const
+{
+    if (device_ == device)
+    {
+        if (device_ == Device::CPU)
+        {
+            Tensor result(shape_, Device::CPU);
+            result.data_ = data_;
+            return result;
+        }
+
+        Tensor result(shape_, Device::CUDA);
+        std::vector<float> temp(size());
+
+        cuda_data_->copy_to_host(temp.data(), size());
+        result.cuda_data_->copy_from_host(temp.data(), size());
+        return result;
+    }
+
+    // CPU -> CUDA
+    if (device_ == Device::CPU &&
+        device == Device::CUDA)
+    {
+        Tensor result(shape_, Device::CUDA);
+
+        result.cuda_data_->copy_from_host(
+            data_.data(),
+            size()
+        );
+
+        return result;
+    }
+
+    // CUDA -> CPU
+    Tensor result(shape_, Device::CPU);
+
+    cuda_data_->copy_to_host(
+        result.data_.data(),
+        size()
+    );
+
+    return result;
+    
+}
+
+
 
 
 

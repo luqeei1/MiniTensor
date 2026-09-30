@@ -1,35 +1,38 @@
 #include "tensor/CudaBuffer.hpp"
 #include "tensor/CudaOps.hpp"
+#include "tensor/Tensor.hpp"
 
 #include <iostream>
 
 int main()
 {
-    constexpr std::size_t n = 5;
+    // Start with a CPU tensor
+    Tensor cpu = Tensor::ones({5});
 
-    float host_a[n] = {1, 2, 3, 4, 5};
-    float host_b[n] = {10, 20, 30, 40, 50};
-    float host_c[n] = {};
+    std::cout << "Original CPU tensor: ";
 
-    CudaBuffer a(n);
-    CudaBuffer b(n);
-    CudaBuffer c(n);
-
-    a.copy_from_host(host_a, n);
-    b.copy_from_host(host_b, n);
-
-    cuda_subtract(
-        a.data(),
-        b.data(),
-        c.data(),
-        n
-    );
-
-    c.copy_to_host(host_c, n);
-
-    for (float value : host_c)
+    for (std::size_t i = 0; i < cpu.size(); ++i)
     {
-        std::cout << value << " ";
+        std::cout << cpu.at({i}) << " ";
+    }
+
+    std::cout << '\n';
+
+    // CPU -> GPU
+    Tensor gpu = cpu.to(Device::CUDA);
+
+    std::cout << "Moved to CUDA: "
+              << (gpu.device() == Device::CUDA)
+              << '\n';
+
+    // GPU -> CPU
+    Tensor cpu_again = gpu.to(Device::CPU);
+
+    std::cout << "Back on CPU: ";
+
+    for (std::size_t i = 0; i < cpu_again.size(); ++i)
+    {
+        std::cout << cpu_again.at({i}) << " ";
     }
 
     std::cout << '\n';
