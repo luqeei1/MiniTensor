@@ -12,19 +12,8 @@ int main()
 
     CudaBuffer buffer(n);
 
-    cudaMemcpy(
-        buffer.data(),
-        host_in,
-        n * sizeof(float),
-        cudaMemcpyHostToDevice
-    );
-
-    cudaMemcpy(
-        host_out,
-        buffer.data(),
-        n * sizeof(float),
-        cudaMemcpyDeviceToHost
-    );
+    buffer.copy_from_host(host_in, n);
+    buffer.copy_to_host(host_out, n);
 
     for (float value : host_out)
     {

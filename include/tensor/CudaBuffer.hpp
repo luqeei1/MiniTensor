@@ -11,6 +11,9 @@ class CudaBuffer
         CudaBuffer(CudaBuffer&& other) noexcept; // Move constructor which promises not to throw exceptions
         CudaBuffer& operator=(CudaBuffer&& other) noexcept; // Move assignment operator
 
+        void copy_from_host(const float* src, std::size_t count); // copy data from  cpu to gpu
+        void copy_to_host(float* dst, std::size_t count) const; // copy data from gpu to cpu
+        
         float* data();
         const float* data() const; 
 

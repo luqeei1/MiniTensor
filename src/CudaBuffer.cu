@@ -31,3 +31,23 @@ const float* CudaBuffer::data() const
 {
     return ptr_;
 }
+
+void CudaBuffer::copy_from_host(const float* src, std::size_t count)
+{
+    if(count > size_){ throw std::runtime_error("Count exceeds buffer size"); }
+    cudaError_t err = cudaMemcpy(ptr_, src, count * sizeof(float), cudaMemcpyHostToDevice);
+    if(err != cudaSuccess)
+    {
+        throw std::runtime_error("Failed to copy data from host to device");
+    }
+}
+
+void CudaBuffer::copy_to_host(float* dst, std::size_t count) const
+{
+    if(count > size_) {throw std::runtime_error("Count exceeds buffer size");}
+    cudaError_t err = cudaMemcpy(dst, ptr_, count * sizeof(float), cudaMemcpyDeviceToHost);
+    if(err != cudaSuccess)
+    {
+        throw std::runtime_error("Failed to copy data from device to host");    
+    }
+}
