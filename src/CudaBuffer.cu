@@ -51,3 +51,28 @@ void CudaBuffer::copy_to_host(float* dst, std::size_t count) const
         throw std::runtime_error("Failed to copy data from device to host");    
     }
 }
+
+CudaBuffer::CudaBuffer(CudaBuffer&& other) noexcept // Move constructor which promises not to throw exceptions
+:
+ ptr_(other.ptr_),
+ size_(other.size_)
+{
+    other.ptr_ = nullptr;
+    other.size_ = 0;
+}
+
+CudaBuffer& CudaBuffer::operator=(CudaBuffer&& other) noexcept // this is called when destination object is already constructed and we want to move the resources from other to this object
+{
+    if (this != &other)
+    {
+        if (ptr_ != nullptr)
+        {
+            cudaFree(ptr_);
+        }
+        ptr_ = other.ptr_;
+        size_ = other.size_;
+        other.ptr_ = nullptr;
+        other.size_ = 0;
+    }
+    return *this; 
+}

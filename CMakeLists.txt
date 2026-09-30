@@ -11,6 +11,7 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 add_library(minitensor
     src/Tensor.cpp
     src/CudaBuffer.cu
+    src/CudaOps.cu
 )
 
 target_include_directories(minitensor
@@ -53,6 +54,8 @@ target_link_libraries(
     minitensor
     GTest::gtest_main
 )
+
+
 
 include(GoogleTest)
 
