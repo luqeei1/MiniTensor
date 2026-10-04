@@ -197,13 +197,18 @@ Tensor Tensor::transpose() const
 
 Tensor Tensor::matmul(const Tensor& other) const 
 {
-    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be used for matrix multiplication"); }
     if (ndim() != 2 || other.ndim() != 2) {throw std::invalid_argument("Matrix multiplication is only implemented for 2D tensors");}
     if (shape_[1] != other.shape_[0]) {throw std::invalid_argument("Inner dimensions do not match for matrix multiplication");}
     
     std::vector<std::size_t> new_shape = {shape_[0], other.shape_[1]};
     Tensor result(new_shape, device_);
     
+    if(device_ == Device::CUDA)
+    {
+        cuda_matmul(cuda_data_->data(), other.cuda_data_->data(), result.cuda_data_->data(), shape_[0], shape_[1], other.shape_[1]);
+        return result;
+    }
+
     for (std::size_t i = 0; i < shape_[0]; ++i)
     {
         for (std::size_t j = 0; j < other.shape_[1]; ++j)
@@ -269,6 +274,7 @@ Tensor Tensor::to(Device device) const
     return result;
     
 }
+
 
 
 
