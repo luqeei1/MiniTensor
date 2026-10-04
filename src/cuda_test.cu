@@ -6,33 +6,16 @@
 
 int main()
 {
-    // Start with a CPU tensor
-    Tensor cpu = Tensor::ones({5});
+    Tensor a = Tensor::ones({5}).to(Device::CUDA);
+    Tensor b = Tensor::ones({5}).to(Device::CUDA);
 
-    std::cout << "Original CPU tensor: ";
+    Tensor c = a - b;
 
-    for (std::size_t i = 0; i < cpu.size(); ++i)
+    Tensor result = c.to(Device::CPU);
+
+    for (std::size_t i = 0; i < result.size(); ++i)
     {
-        std::cout << cpu.at({i}) << " ";
-    }
-
-    std::cout << '\n';
-
-    // CPU -> GPU
-    Tensor gpu = cpu.to(Device::CUDA);
-
-    std::cout << "Moved to CUDA: "
-              << (gpu.device() == Device::CUDA)
-              << '\n';
-
-    // GPU -> CPU
-    Tensor cpu_again = gpu.to(Device::CPU);
-
-    std::cout << "Back on CPU: ";
-
-    for (std::size_t i = 0; i < cpu_again.size(); ++i)
-    {
-        std::cout << cpu_again.at({i}) << " ";
+        std::cout << result.at({i}) << " ";
     }
 
     std::cout << '\n';

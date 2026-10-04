@@ -1,12 +1,12 @@
 #include "tensor/Tensor.hpp"
+#include "tensor/CudaOps.hpp"
 #include <stdexcept>
 #include <string>
 
 Tensor::Tensor(const std::vector<std::size_t>& shape, Device device)
     : device_(device),
 shape_(shape),
-strides_(calculate_strides(shape_)),
-data_(calculate_size(shape_)) 
+strides_(calculate_strides(shape_))
 {
     std::size_t tensor_size = calculate_size(shape_);
 
@@ -111,21 +111,39 @@ Tensor Tensor::ones(const std::vector<std::size_t>& shape)
 Tensor Tensor::operator+(const Tensor& other) const
 {
     if (shape_ != other.shape_) {throw std::runtime_error("Shapes do not match so cannot perform addition");}
-    Tensor result(shape_);
-    for (std::size_t i = 0; i < data_.size(); ++i)
+    if(device_ != other.device_) {throw std::runtime_error("Tensors are on different devices and this is not allowed");}
+    Tensor result(shape_, device_);
+
+    if(device_ == Device::CPU)
     {
-        result.data_[i] = data_[i] + other.data_[i];
+        for (std::size_t i = 0; i < data_.size(); ++i)
+        {
+            result.data_[i] = data_[i] + other.data_[i];
+        }
     }
+    else
+    {
+        cuda_add(cuda_data_->data(), other.cuda_data_->data(), result.cuda_data_->data(), size());
+    }
+    
     return result;
 }
 
 Tensor Tensor::operator-(const Tensor& other) const
 {
+    if(device_ != other.device_) {throw std::runtime_error("Tensors are on different devices and this is not allowed");}
     if( shape_ != other.shape_ ) { throw std::runtime_error("Shapes do not match so cannot perform subtraction");}
-    Tensor result(shape_);
-    for( std::size_t i = 0; i < data_.size(); ++i)
+    Tensor result(shape_, device_);
+    if(device_ == Device::CPU)
     {
-        result.data_[i] = data_[i] - other.data_[i];
+        for( std::size_t i = 0; i < data_.size(); ++i)
+        {
+            result.data_[i] = data_[i] - other.data_[i];
+        }
+    }
+    else
+    {
+        cuda_subtract(cuda_data_->data(), other.cuda_data_->data(), result.cuda_data_->data(), size());
     }
     return result;
 }
@@ -133,10 +151,18 @@ Tensor Tensor::operator-(const Tensor& other) const
 Tensor Tensor::operator*(const Tensor& other) const
 {
     if( shape_ != other.shape_ ) { throw std::runtime_error("Shapes do not match so cannot perform multiplication");}
-    Tensor result(shape_);
-    for( std::size_t i = 0; i < data_.size(); ++i)
+    if(device_ != other.device_) {throw std::runtime_error("Tensors are on different devices and this is not allowed");}
+    Tensor result(shape_, device_);
+    if(device_ == Device::CPU)
     {
-        result.data_[i] = data_[i] * other.data_[i];
+        for( std::size_t i = 0; i < data_.size(); ++i)
+        {
+            result.data_[i] = data_[i] * other.data_[i];
+        }
+    }
+    else
+    {
+        cuda_multiply(cuda_data_->data(), other.cuda_data_->data(), result.cuda_data_->data(), size());
     }
     return result;
 }
@@ -145,7 +171,7 @@ Tensor Tensor::reshape(const std::vector<std::size_t>& new_shape) const
 {
     std::size_t new_size = calculate_size(new_shape);
     if (new_size != size()) {throw std::runtime_error("New shape does not match the total number of elements in the tensor");}
-    Tensor result(new_shape); 
+    Tensor result(new_shape, device_); 
     result.data_ = data_; 
     return result;
 }
@@ -154,7 +180,7 @@ Tensor Tensor::transpose() const
 {
     if (ndim() != 2) {throw std::runtime_error("Transpose is only implemented for 2D tensors");}
     std::vector<std::size_t> new_shape = {shape_[1], shape_[0]};
-    Tensor result(new_shape);
+    Tensor result(new_shape, device_);
     for (std::size_t i = 0; i < shape_[0]; ++i)
     {
         for (std::size_t j = 0; j < shape_[1]; ++j)
@@ -171,7 +197,7 @@ Tensor Tensor::matmul(const Tensor& other) const
     if (shape_[1] != other.shape_[0]) {throw std::invalid_argument("Inner dimensions do not match for matrix multiplication");}
     
     std::vector<std::size_t> new_shape = {shape_[0], other.shape_[1]};
-    Tensor result(new_shape);
+    Tensor result(new_shape, device_);
     
     for (std::size_t i = 0; i < shape_[0]; ++i)
     {
