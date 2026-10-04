@@ -79,12 +79,14 @@ const std::vector<std::size_t>& Tensor::strides() const
 
 float& Tensor::at(const std::vector<std::size_t>& indices)
 {
+    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be accessed with at()"); }
     std::size_t offset = calculate_offset(indices);
     return data_[offset];
 }
 
 const float& Tensor::at(const std::vector<std::size_t>& indices) const 
 {
+    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be accessed with at()"); }
     std::size_t offset = calculate_offset(indices);
     return data_[offset];
 }
@@ -169,6 +171,7 @@ Tensor Tensor::operator*(const Tensor& other) const
 
 Tensor Tensor::reshape(const std::vector<std::size_t>& new_shape) const
 {
+    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be reshaped"); }
     std::size_t new_size = calculate_size(new_shape);
     if (new_size != size()) {throw std::runtime_error("New shape does not match the total number of elements in the tensor");}
     Tensor result(new_shape, device_); 
@@ -178,6 +181,7 @@ Tensor Tensor::reshape(const std::vector<std::size_t>& new_shape) const
 
 Tensor Tensor::transpose() const
 {
+    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be transposed"); }
     if (ndim() != 2) {throw std::runtime_error("Transpose is only implemented for 2D tensors");}
     std::vector<std::size_t> new_shape = {shape_[1], shape_[0]};
     Tensor result(new_shape, device_);
@@ -193,6 +197,7 @@ Tensor Tensor::transpose() const
 
 Tensor Tensor::matmul(const Tensor& other) const 
 {
+    if(device_ != Device::CPU) { throw std::runtime_error("Only CPU tensors can be used for matrix multiplication"); }
     if (ndim() != 2 || other.ndim() != 2) {throw std::invalid_argument("Matrix multiplication is only implemented for 2D tensors");}
     if (shape_[1] != other.shape_[0]) {throw std::invalid_argument("Inner dimensions do not match for matrix multiplication");}
     
